@@ -1,4 +1,4 @@
-directive @isAuthenticated on FIELD_DEFINITION
+# directive @isAuthenticated on FIELD_DEFINITION
 
 scalar DateTime
 
@@ -10,8 +10,8 @@ interface Node {
 
 type PageInfo {
   endCursor: String
-  hadNextPage: Boolean!
-  hadPreviousPage: Boolean!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
   startCursor: String
 }
 
@@ -21,13 +21,13 @@ type Repository implements Node {
   name: String!
   createdAt: DateTime!
   issue(number: Int!): Issue
-  issues(first: Int, after: String, last: Int, before: String): IssueConnection!
+  issues(after: String, before: String, first: Int, last: Int): IssueConnection!
   pullRequest(number: Int!): PullRequest
   pullRequests(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): PullRequestConnection!
 }
 
@@ -36,10 +36,10 @@ type User implements Node {
   name: String!
   projectV2(number: Int!): ProjectV2
   projectV2s(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2Connection!
 }
 
@@ -52,10 +52,10 @@ type Issue implements Node {
   author: User!
   repository: Repository!
   projectItems(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2ItemConnection!
 }
 
@@ -80,10 +80,10 @@ type PullRequest implements Node {
   number: Int!
   repository: Repository!
   projectItems(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2ItemConnection!
 }
 
@@ -129,8 +129,8 @@ union ProjectV2ItemContent = Issue | PullRequest
 
 type ProjectV2Item implements Node {
   id: ID!
-  content: ProjectV2ItemContent!
   project: ProjectV2!
+  content: ProjectV2ItemContent
 }
 
 type ProjectV2ItemConnection {
@@ -148,7 +148,8 @@ type ProjectV2ItemEdge {
 type Query {
   repository(name: String!, owner: String!): Repository
 
-  user(name: String!): User @isAuthenticated
+  user(name: String!): User
+  # user(name: String!): User @isAuthenticated
 
   node(id: ID!): Node
 }
@@ -159,7 +160,7 @@ input AddProjectV2ItemByIdInput {
 }
 
 type AddProjectV2ItemByIdPayload {
-  projectV2Item: ProjectV2Item
+  item: ProjectV2Item
 }
 
 type Mutation {

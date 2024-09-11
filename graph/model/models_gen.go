@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"time"
+)
+
 type Node interface {
 	IsNode()
 	GetID() string
@@ -17,7 +21,7 @@ type AddProjectV2ItemByIDInput struct {
 }
 
 type AddProjectV2ItemByIDPayload struct {
-	ProjectV2Item *ProjectV2Item `json:"projectV2Item,omitempty"`
+	Item *ProjectV2Item `json:"item,omitempty"`
 }
 
 type Issue struct {
@@ -53,8 +57,8 @@ type Mutation struct {
 
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
-	HadNextPage     bool    `json:"hadNextPage"`
-	HadPreviousPage bool    `json:"hadPreviousPage"`
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
 	StartCursor     *string `json:"startCursor,omitempty"`
 }
 
@@ -84,8 +88,8 @@ type ProjectV2Edge struct {
 
 type ProjectV2Item struct {
 	ID      string               `json:"id"`
-	Content ProjectV2ItemContent `json:"content"`
 	Project *ProjectV2           `json:"project"`
+	Content ProjectV2ItemContent `json:"content,omitempty"`
 }
 
 func (ProjectV2Item) IsNode()            {}
@@ -138,7 +142,7 @@ type Repository struct {
 	ID           string                 `json:"id"`
 	Owner        *User                  `json:"owner"`
 	Name         string                 `json:"name"`
-	CreatedAt    string                 `json:"createdAt"`
+	CreatedAt    time.Time              `json:"createdAt"`
 	Issue        *Issue                 `json:"issue,omitempty"`
 	Issues       *IssueConnection       `json:"issues"`
 	PullRequest  *PullRequest           `json:"pullRequest,omitempty"`

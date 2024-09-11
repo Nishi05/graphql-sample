@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -43,12 +44,11 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	IsAuthenticated func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
 	AddProjectV2ItemByIdPayload struct {
-		ProjectV2Item func(childComplexity int) int
+		Item func(childComplexity int) int
 	}
 
 	Issue struct {
@@ -56,7 +56,7 @@ type ComplexityRoot struct {
 		Closed       func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Number       func(childComplexity int) int
-		ProjectItems func(childComplexity int, first *int, after *string, last *int, before *string) int
+		ProjectItems func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Repository   func(childComplexity int) int
 		Title        func(childComplexity int) int
 		URL          func(childComplexity int) int
@@ -80,8 +80,8 @@ type ComplexityRoot struct {
 
 	PageInfo struct {
 		EndCursor       func(childComplexity int) int
-		HadNextPage     func(childComplexity int) int
-		HadPreviousPage func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
 		StartCursor     func(childComplexity int) int
 	}
 
@@ -130,7 +130,7 @@ type ComplexityRoot struct {
 		HeadRefName  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Number       func(childComplexity int) int
-		ProjectItems func(childComplexity int, first *int, after *string, last *int, before *string) int
+		ProjectItems func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Repository   func(childComplexity int) int
 		URL          func(childComplexity int) int
 	}
@@ -157,18 +157,18 @@ type ComplexityRoot struct {
 		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Issue        func(childComplexity int, number int) int
-		Issues       func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Issues       func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Name         func(childComplexity int) int
 		Owner        func(childComplexity int) int
 		PullRequest  func(childComplexity int, number int) int
-		PullRequests func(childComplexity int, first *int, after *string, last *int, before *string) int
+		PullRequests func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
 
 	User struct {
 		ID         func(childComplexity int) int
 		Name       func(childComplexity int) int
 		ProjectV2  func(childComplexity int, number int) int
-		ProjectV2s func(childComplexity int, first *int, after *string, last *int, before *string) int
+		ProjectV2s func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
 }
 
@@ -200,12 +200,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "AddProjectV2ItemByIdPayload.projectV2Item":
-		if e.complexity.AddProjectV2ItemByIdPayload.ProjectV2Item == nil {
+	case "AddProjectV2ItemByIdPayload.item":
+		if e.complexity.AddProjectV2ItemByIdPayload.Item == nil {
 			break
 		}
 
-		return e.complexity.AddProjectV2ItemByIdPayload.ProjectV2Item(childComplexity), true
+		return e.complexity.AddProjectV2ItemByIdPayload.Item(childComplexity), true
 
 	case "Issue.author":
 		if e.complexity.Issue.Author == nil {
@@ -245,7 +245,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Issue.ProjectItems(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Issue.ProjectItems(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "Issue.repository":
 		if e.complexity.Issue.Repository == nil {
@@ -329,19 +329,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.EndCursor(childComplexity), true
 
-	case "PageInfo.hadNextPage":
-		if e.complexity.PageInfo.HadNextPage == nil {
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HadNextPage(childComplexity), true
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
 
-	case "PageInfo.hadPreviousPage":
-		if e.complexity.PageInfo.HadPreviousPage == nil {
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HadPreviousPage(childComplexity), true
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
 
 	case "PageInfo.startCursor":
 		if e.complexity.PageInfo.StartCursor == nil {
@@ -547,7 +547,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.PullRequest.ProjectItems(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.PullRequest.ProjectItems(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "PullRequest.repository":
 		if e.complexity.PullRequest.Repository == nil {
@@ -677,7 +677,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Repository.Issues(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Repository.Issues(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "Repository.name":
 		if e.complexity.Repository.Name == nil {
@@ -715,7 +715,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Repository.PullRequests(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Repository.PullRequests(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -753,7 +753,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.User.ProjectV2s(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.User.ProjectV2s(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	}
 	return 0, false
@@ -861,7 +861,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `directive @isAuthenticated on FIELD_DEFINITION
+	{Name: "../schema.graphqls", Input: `# directive @isAuthenticated on FIELD_DEFINITION
 
 scalar DateTime
 
@@ -873,8 +873,8 @@ interface Node {
 
 type PageInfo {
   endCursor: String
-  hadNextPage: Boolean!
-  hadPreviousPage: Boolean!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
   startCursor: String
 }
 
@@ -884,13 +884,13 @@ type Repository implements Node {
   name: String!
   createdAt: DateTime!
   issue(number: Int!): Issue
-  issues(first: Int, after: String, last: Int, before: String): IssueConnection!
+  issues(after: String, before: String, first: Int, last: Int): IssueConnection!
   pullRequest(number: Int!): PullRequest
   pullRequests(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): PullRequestConnection!
 }
 
@@ -899,10 +899,10 @@ type User implements Node {
   name: String!
   projectV2(number: Int!): ProjectV2
   projectV2s(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2Connection!
 }
 
@@ -915,10 +915,10 @@ type Issue implements Node {
   author: User!
   repository: Repository!
   projectItems(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2ItemConnection!
 }
 
@@ -943,10 +943,10 @@ type PullRequest implements Node {
   number: Int!
   repository: Repository!
   projectItems(
-    first: Int
     after: String
-    last: Int
     before: String
+    first: Int
+    last: Int
   ): ProjectV2ItemConnection!
 }
 
@@ -992,8 +992,8 @@ union ProjectV2ItemContent = Issue | PullRequest
 
 type ProjectV2Item implements Node {
   id: ID!
-  content: ProjectV2ItemContent!
   project: ProjectV2!
+  content: ProjectV2ItemContent
 }
 
 type ProjectV2ItemConnection {
@@ -1011,7 +1011,8 @@ type ProjectV2ItemEdge {
 type Query {
   repository(name: String!, owner: String!): Repository
 
-  user(name: String!): User @isAuthenticated
+  user(name: String!): User
+  # user(name: String!): User @isAuthenticated
 
   node(id: ID!): Node
 }
@@ -1022,7 +1023,7 @@ input AddProjectV2ItemByIdInput {
 }
 
 type AddProjectV2ItemByIdPayload {
-  projectV2Item: ProjectV2Item
+  item: ProjectV2Item
 }
 
 type Mutation {
@@ -1041,42 +1042,42 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Issue_projectItems_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["after"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["before"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["before"] = arg3
+	args["last"] = arg3
 	return args, nil
 }
 
@@ -1140,42 +1141,42 @@ func (ec *executionContext) field_ProjectV2_items_args(ctx context.Context, rawA
 func (ec *executionContext) field_PullRequest_projectItems_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["after"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["before"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["before"] = arg3
+	args["last"] = arg3
 	return args, nil
 }
 
@@ -1266,42 +1267,42 @@ func (ec *executionContext) field_Repository_issue_args(ctx context.Context, raw
 func (ec *executionContext) field_Repository_issues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["after"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["before"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["before"] = arg3
+	args["last"] = arg3
 	return args, nil
 }
 
@@ -1323,42 +1324,42 @@ func (ec *executionContext) field_Repository_pullRequest_args(ctx context.Contex
 func (ec *executionContext) field_Repository_pullRequests_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["after"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["before"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["before"] = arg3
+	args["last"] = arg3
 	return args, nil
 }
 
@@ -1380,42 +1381,42 @@ func (ec *executionContext) field_User_projectV2_args(ctx context.Context, rawAr
 func (ec *executionContext) field_User_projectV2s_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["after"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["before"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["before"] = arg3
+	args["last"] = arg3
 	return args, nil
 }
 
@@ -1457,8 +1458,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AddProjectV2ItemByIdPayload_projectV2Item(ctx context.Context, field graphql.CollectedField, obj *model.AddProjectV2ItemByIDPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddProjectV2ItemByIdPayload_projectV2Item(ctx, field)
+func (ec *executionContext) _AddProjectV2ItemByIdPayload_item(ctx context.Context, field graphql.CollectedField, obj *model.AddProjectV2ItemByIDPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AddProjectV2ItemByIdPayload_item(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1471,7 +1472,7 @@ func (ec *executionContext) _AddProjectV2ItemByIdPayload_projectV2Item(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ProjectV2Item, nil
+		return obj.Item, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1485,7 +1486,7 @@ func (ec *executionContext) _AddProjectV2ItemByIdPayload_projectV2Item(ctx conte
 	return ec.marshalOProjectV2Item2ᚖgithubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2Item(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddProjectV2ItemByIdPayload_projectV2Item(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddProjectV2ItemByIdPayload_item(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddProjectV2ItemByIdPayload",
 		Field:      field,
@@ -1495,10 +1496,10 @@ func (ec *executionContext) fieldContext_AddProjectV2ItemByIdPayload_projectV2It
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ProjectV2Item_id(ctx, field)
-			case "content":
-				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			case "project":
 				return ec.fieldContext_ProjectV2Item_project(ctx, field)
+			case "content":
+				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProjectV2Item", field.Name)
 		},
@@ -2054,10 +2055,10 @@ func (ec *executionContext) fieldContext_IssueConnection_pageInfo(_ context.Cont
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hadNextPage":
-				return ec.fieldContext_PageInfo_hadNextPage(ctx, field)
-			case "hadPreviousPage":
-				return ec.fieldContext_PageInfo_hadPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -2250,8 +2251,8 @@ func (ec *executionContext) fieldContext_Mutation_addProjectV2ItemById(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "projectV2Item":
-				return ec.fieldContext_AddProjectV2ItemByIdPayload_projectV2Item(ctx, field)
+			case "item":
+				return ec.fieldContext_AddProjectV2ItemByIdPayload_item(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AddProjectV2ItemByIdPayload", field.Name)
 		},
@@ -2311,8 +2312,8 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _PageInfo_hadNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PageInfo_hadNextPage(ctx, field)
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2325,7 +2326,7 @@ func (ec *executionContext) _PageInfo_hadNextPage(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HadNextPage, nil
+		return obj.HasNextPage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2342,7 +2343,7 @@ func (ec *executionContext) _PageInfo_hadNextPage(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hadNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -2355,8 +2356,8 @@ func (ec *executionContext) fieldContext_PageInfo_hadNextPage(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PageInfo_hadPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PageInfo_hadPreviousPage(ctx, field)
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2369,7 +2370,7 @@ func (ec *executionContext) _PageInfo_hadPreviousPage(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HadPreviousPage, nil
+		return obj.HasPreviousPage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2386,7 +2387,7 @@ func (ec *executionContext) _PageInfo_hadPreviousPage(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hadPreviousPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -2878,10 +2879,10 @@ func (ec *executionContext) fieldContext_ProjectV2Connection_pageInfo(_ context.
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hadNextPage":
-				return ec.fieldContext_PageInfo_hadNextPage(ctx, field)
-			case "hadPreviousPage":
-				return ec.fieldContext_PageInfo_hadPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -3078,50 +3079,6 @@ func (ec *executionContext) fieldContext_ProjectV2Item_id(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _ProjectV2Item_content(ctx context.Context, field graphql.CollectedField, obj *model.ProjectV2Item) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ProjectV2Item_content(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ProjectV2ItemContent)
-	fc.Result = res
-	return ec.marshalNProjectV2ItemContent2githubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2ItemContent(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ProjectV2Item_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProjectV2Item",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ProjectV2ItemContent does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ProjectV2Item_project(ctx context.Context, field graphql.CollectedField, obj *model.ProjectV2Item) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProjectV2Item_project(ctx, field)
 	if err != nil {
@@ -3175,6 +3132,47 @@ func (ec *executionContext) fieldContext_ProjectV2Item_project(_ context.Context
 				return ec.fieldContext_ProjectV2_owner(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProjectV2", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProjectV2Item_content(ctx context.Context, field graphql.CollectedField, obj *model.ProjectV2Item) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProjectV2Item_content(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.ProjectV2ItemContent)
+	fc.Result = res
+	return ec.marshalOProjectV2ItemContent2githubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2ItemContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProjectV2Item_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProjectV2Item",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProjectV2ItemContent does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3265,10 +3263,10 @@ func (ec *executionContext) fieldContext_ProjectV2ItemConnection_nodes(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ProjectV2Item_id(ctx, field)
-			case "content":
-				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			case "project":
 				return ec.fieldContext_ProjectV2Item_project(ctx, field)
+			case "content":
+				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProjectV2Item", field.Name)
 		},
@@ -3317,10 +3315,10 @@ func (ec *executionContext) fieldContext_ProjectV2ItemConnection_pageInfo(_ cont
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hadNextPage":
-				return ec.fieldContext_PageInfo_hadNextPage(ctx, field)
-			case "hadPreviousPage":
-				return ec.fieldContext_PageInfo_hadPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -3456,10 +3454,10 @@ func (ec *executionContext) fieldContext_ProjectV2ItemEdge_node(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ProjectV2Item_id(ctx, field)
-			case "content":
-				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			case "project":
 				return ec.fieldContext_ProjectV2Item_project(ctx, field)
+			case "content":
+				return ec.fieldContext_ProjectV2Item_content(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProjectV2Item", field.Name)
 		},
@@ -4005,10 +4003,10 @@ func (ec *executionContext) fieldContext_PullRequestConnection_pageInfo(_ contex
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hadNextPage":
-				return ec.fieldContext_PageInfo_hadNextPage(ctx, field)
-			case "hadPreviousPage":
-				return ec.fieldContext_PageInfo_hadPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -4248,28 +4246,8 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().User(rctx, fc.Args["name"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsAuthenticated == nil {
-				return nil, errors.New("directive isAuthenticated is not implemented")
-			}
-			return ec.directives.IsAuthenticated(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.User); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Nishi05/graphql-sample/graph/model.User`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().User(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4666,9 +4644,9 @@ func (ec *executionContext) _Repository_createdAt(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7073,8 +7051,8 @@ func (ec *executionContext) _AddProjectV2ItemByIdPayload(ctx context.Context, se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddProjectV2ItemByIdPayload")
-		case "projectV2Item":
-			out.Values[i] = ec._AddProjectV2ItemByIdPayload_projectV2Item(ctx, field, obj)
+		case "item":
+			out.Values[i] = ec._AddProjectV2ItemByIdPayload_item(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7320,13 +7298,13 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("PageInfo")
 		case "endCursor":
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
-		case "hadNextPage":
-			out.Values[i] = ec._PageInfo_hadNextPage(ctx, field, obj)
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "hadPreviousPage":
-			out.Values[i] = ec._PageInfo_hadPreviousPage(ctx, field, obj)
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7524,16 +7502,13 @@ func (ec *executionContext) _ProjectV2Item(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "content":
-			out.Values[i] = ec._ProjectV2Item_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "project":
 			out.Values[i] = ec._ProjectV2Item_project(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "content":
+			out.Values[i] = ec._ProjectV2Item_content(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8381,13 +8356,13 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDateTime2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNDateTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNDateTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8474,16 +8449,6 @@ func (ec *executionContext) marshalNProjectV2ItemConnection2ᚖgithubᚗcomᚋNi
 		return graphql.Null
 	}
 	return ec._ProjectV2ItemConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProjectV2ItemContent2githubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2ItemContent(ctx context.Context, sel ast.SelectionSet, v model.ProjectV2ItemContent) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProjectV2ItemContent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPullRequestConnection2ᚖgithubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐPullRequestConnection(ctx context.Context, sel ast.SelectionSet, v *model.PullRequestConnection) graphql.Marshaler {
@@ -9093,6 +9058,13 @@ func (ec *executionContext) marshalOProjectV2Item2ᚖgithubᚗcomᚋNishi05ᚋgr
 		return graphql.Null
 	}
 	return ec._ProjectV2Item(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProjectV2ItemContent2githubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2ItemContent(ctx context.Context, sel ast.SelectionSet, v model.ProjectV2ItemContent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProjectV2ItemContent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOProjectV2ItemEdge2ᚕᚖgithubᚗcomᚋNishi05ᚋgraphqlᚑsampleᚋgraphᚋmodelᚐProjectV2ItemEdge(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectV2ItemEdge) graphql.Marshaler {
