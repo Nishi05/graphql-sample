@@ -22,8 +22,8 @@ func convertUser(user *db.User) *model.User {
 
 func (u *userService) GetUserByName(ctx context.Context, name string) (*model.User, error) {
 	user, err := db.Users( // from users
-		qm.Select(db.UserTableColumns.ID, db.UserTableColumns.Name), // select id, name
-		db.UserWhere.Name.EQ(name),                                  // where name = {引数nameの内容}
+		qm.Select(db.UserColumns.ID, db.UserColumns.Name), // select id, name
+		db.UserWhere.Name.EQ(name),                        // where name = {引数nameの内容}
 	).One(ctx, u.exec) // limit 1
 
 	if err != nil {
