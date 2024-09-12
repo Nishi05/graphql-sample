@@ -88,3 +88,18 @@ models:
   DateTime:
     model:
       - github.com/99designs/gqlgen/graphql.Time
+  URI:
+    model:
+      - github.com/Nishi05/graphql-sample/graph/model.URI
+  Repository:
+    fields:
+      owner: 
+        resolver: true
+      issue:
+        resolver: true
+      issues:
+        resolver: true
+      pullRequest:
+        resolver: true
+      pullRequests:
+        resolver: true
