@@ -8,4 +8,5 @@ import "github.com/Nishi05/graphql-sample/graph/services"
 
 type Resolver struct {
 	Srv services.Services
+	*Loaders
 }
