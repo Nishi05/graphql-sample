@@ -9,20 +9,36 @@ import (
 
 type UserService interface {
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
+	GetUserByID(ctx context.Context, id string) (*model.User, error)
+	ListUsersByID(ctx context.Context, IDs []string) ([]*model.User, error)
 }
 
-type RepositoryService interface {
+type RepoService interface {
+	GetRepoByID(ctx context.Context, id string) (*model.Repository, error)
 	GetRepoByFullName(ctx context.Context, owner, name string) (*model.Repository, error)
+}
+
+type IssueService interface {
+	GetIssueByRepoAndNumber(ctx context.Context, repoID string, number int) (*model.Issue, error)
+	ListIssueInRepository(ctx context.Context, repoID string, after *string, before *string, first *int, last *int) (*model.IssueConnection, error)
+}
+
+type PullRequestService interface {
+	GetPullRequestByRepoAndNumber(ctx context.Context, repoID string, number int) (*model.PullRequest, error)
 }
 
 type Services interface {
 	UserService
-	RepositoryService
+	RepoService
+	IssueService
+	PullRequestService
 }
 
 type services struct {
 	*userService
-	*repositoryService
+	*repoService
+	*issueService
+	*pullRequestService
 }
 
 func New(exec boil.ContextExecutor) Services {
@@ -30,7 +46,13 @@ func New(exec boil.ContextExecutor) Services {
 		&userService{
 			exec: exec,
 		},
-		&repositoryService{
+		&repoService{
+			exec: exec,
+		},
+		&issueService{
+			exec: exec,
+		},
+		&pullRequestService{
 			exec: exec,
 		},
 	}
