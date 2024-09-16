@@ -9,6 +9,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/Nishi05/graphql-sample/graph"
 	"github.com/Nishi05/graphql-sample/graph/services"
@@ -27,6 +28,8 @@ func main() {
 		port = defaultPort
 	}
 
+	boil.DebugMode = true
+
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?_foreign_keys=on", dbFile))
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
@@ -36,7 +39,8 @@ func main() {
 	service := services.New(db)
 
 	srv := handler.NewDefaultServer(internal.NewExecutableSchema(internal.Config{Resolvers: &graph.Resolver{
-		Srv: service,
+		Srv:     service,
+		Loaders: graph.NewLoaders(service),
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
